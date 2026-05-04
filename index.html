@@ -2,19 +2,496 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>tissimo保管庫</title>
     <meta name="robots" content="noindex, nofollow">
+    <!-- 個別の埋め込みコード内にある <script ...></script> は無視していいように、サイト全体で一度だけ読み込む設定 -->
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    <title>Minimal Album</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link rel="stylesheet" href="css.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <h1>tissimo保管庫</h1>
-    
-    <!-- X(Twitter)へのリンク -->
-    <p><a href="https://x.com/あなたのユーザー名">X (Twitter)</a></p>
+<header class="main-header">
+    <div class="nav-container">
+        <!-- グループ1：Xシリーズ画像 -->
+        <div class="nav-group">
 
-    <!-- SoundCloudの埋め込み (SoundCloudの共有メニューから取得できます) -->
-    <h2>My Music</h2>
-    <iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" 
-        src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/あなたのトラックID">
-    </iframe>
+            <nav class="nav-links">
+                <!-- hrefの後に onclick を追加し、最後に return false; を入れるのがポイントです -->
+                <a href="#" class="active" onclick="filterByMedia('all', this); return false;">すべて</a>
+                 
+                <a href="#" onclick="filterByMedia('一枚絵', this); return false;"><i class="fa-brands fa-x-twitter x-icon"></i>一枚絵</a>
+                <a href="#" onclick="filterByMedia('漫画', this); return false;"><i class="fa-brands fa-x-twitter x-icon"></i>漫画</a>
+                <!-- hrefの後に onclick を追加し、最後に return false; を入れるのがポイントです -->
+                <a href="#" onclick="filterByMedia('動画', this); return false;"><i class="fa-brands fa-x-twitter x-icon"></i>動画</a>
+                <a href="#" onclick="filterByMedia('SoundCloud', this); return false;"><i class="fa-brands fa-soundcloud sc-icon"></i>SoundCloud</a>
+            </nav>
+        </div>
+    </div>
+</header>
+<!-- タイトル -->
+<div class="title-area">
+    <h1>ゆるいリンク集</h1>
+    <p class="subtitle">勉強と備忘録のために作ったティッ〇モのSNS倉庫です。<br>
+    これからupするものは新しい順に並びます。品性とクオリティがアカン…<br>
+    SoundCloudはmixがう〇こで凶器と化す可能性があるので音量注意でございます。バクと地球のサムネのやつは比較的安全なので安心してご視聴ください（他はダメなのかよ）<br>
+    Soundを含む2時創作はDTM環境を復活させ次第Xの方に動画でポスト予定です早く曲書きたい。
+</p>
+</div>
+<div id="debug" style="color:red;"></div>
+
+<!-- カード表示領域 -->
+<div id="main-container">
+    <div id="card-container">読み込み中...</div>
+</div>
+
+<script>
+// 1. グローバル変数の宣言（一番上に置く）
+let originalData = []; // 全データを保持する「マスターデータ」
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRDY_I68pzm-XcFR9UYUXh5ZU_oBCnh-pFVtzplEIDwOI966bHRSF2IEFVKbJiiTsp6Nn5MbJk7Zm1_/pub?output=csv&gid=1486557522";
+
+// 2. ページ読み込み時の処理
+async function load() {
+    const timestamp = new Date().getTime();
+    const fetchingUrl = `${CSV_URL}&t=${timestamp}`;
+
+    Papa.parse(fetchingUrl, {
+        download: true,
+        header: true,
+        complete: function(results) {
+            // 取得したデータを「マスターデータ」に保存
+            originalData = results.data; 
+            // 最初は「すべて」を表示
+            displayCards(originalData); 
+        }
+    });
+}
+
+// 3. フィルタリングとタブ切り替えの関数
+function filterByMedia(mediaType, element) {
+    // 1. ページ内のすべてのナビゲーションリンクから 'active' クラスを外す
+    const links = document.querySelectorAll('.nav-links a');
+    links.forEach(link => link.classList.remove('active'));
+
+    // 2. 今クリックされた要素だけに 'active' クラスを付ける
+    element.classList.add('active');
+
+    // 3. 実際のフィルタリング処理
+    let filtered;
+    if (mediaType === 'all') {
+        filtered = originalData;
+    } else {
+        // スプレッドシートの「種別」列で判定
+        filtered = originalData.filter(item => item.種別 === mediaType);
+    }
+
+    // 4で作成する描画関数を呼び出す
+    displayCards(filtered);
+}
+
+// 4. データ加工＋画面への追加
+function displayCards(validData) {
+    
+    // 1.初期化
+    const container = document.getElementById('card-container'); // 表示先の箱
+    if (!container) return;
+    container.innerHTML = ''; // 一旦空にする
+
+    // 2. シリーズごとにグループ化
+    const seriesGroups = {};
+    const singles = [];
+
+    validData.forEach(item => {
+        if (item.シリーズ && item.シリーズ.trim() !== "") {
+            if (!seriesGroups[item.シリーズ]) {
+                seriesGroups[item.シリーズ] = [];
+            }
+            seriesGroups[item.シリーズ].push(item);
+        } else {
+            singles.push(item);
+        }
+    });
+
+    // 3. ソート
+    const allItems = [];
+
+    // 3-1. シリーズ枠のソート順
+    Object.keys(seriesGroups).forEach(seriesName => {
+        const items = seriesGroups[seriesName];
+
+        // シリーズ内を「シリーズ連番」の順に並べる
+        items.sort((a, b) => {
+            const numA = (a.シリーズ連番 && a.シリーズ連番.trim() !== "") ? parseInt(a.シリーズ連番) : Infinity;
+            const numB = (b.シリーズ連番 && b.シリーズ連番.trim() !== "") ? parseInt(b.シリーズ連番) : Infinity;
+            return numA - numB;
+        });
+        // シリーズ全体の並び順（新着順）を決めるための、一番大きい（新しい）IDを取得
+        const maxId = Math.max(...items.map(item => parseInt(item.ID || 0)));
+        // シリーズ内の連番野最大値を取得
+        const maxSeriesId = Math.max(...items.map(item => parseInt(item.シリーズ連番 || 0)));
+
+        allItems.push({ 
+            type: 'series', 
+            seriesName: seriesName, 
+            items: items, 
+            sortId: maxId,
+            maxSeriesId: maxSeriesId // 「何巻まであるか」の情報として持たせておく
+        });
+    });
+
+    // 3-2.単品枠のソート順
+    singles.forEach(item => {
+        allItems.push({ 
+            type: 'single', 
+            item: item, 
+            sortId: parseInt(item.ID || 0) 
+        });
+    });
+
+    // 3-3. 全体を新しい順（sortIdの降順）にソート
+    allItems.sort((a, b) => b.sortId - a.sortId);
+
+    // 4. カードの生成と画面への追加（描画）
+    const imageSequence = [];   // 表示順の画像を保存するリスト（モーダル用）
+
+    allItems.forEach(entry => {
+        const cardElement = document.createElement('div');
+
+        if (entry.type === 'series') {
+            // シリーズ全体の枠を作る（この中で内部的にcreateSubCardを呼ぶ想定）
+            cardElement.className = 'series-card';
+            cardElement.innerHTML = createSeriesHtml(entry.seriesName, entry.items, entry.maxSeriesId);
+
+            // 【重要】HTMLを作った直後に、中のカードを捕まえる
+            const subCards = cardElement.querySelectorAll('.sub-card');
+
+            entry.items.forEach((item, index) => {
+                const subCard = subCards[index];
+                // 参照先は「item.ポストURL」
+                if (subCard && item.ポストURL) {
+
+                    // 1. このアイテムが動画やSoundCloudかどうかを判定
+                    const isMedia = item.種別 === '動画' || item.種別 === 'SoundCloud';
+                    
+                    // 2. 動画などの場合は「no-move」クラスを追加する
+                    // 既存のクラス（sub-card）を消さないように注意！
+                    if (isMedia) {
+                        subCard.classList.add('no-move');
+                    }
+
+                    subCard.style.cursor = 'pointer';
+                    subCard.onclick = (e) => {
+                        // もしクリックしたターゲットが「IMG」タグなら、ここで終了（例外にする）
+                        // これにより、クリックイベントが親（モーダル管理）まで届くようになります
+                        if (e.target.tagName === 'IMG') return;
+                        window.open(item.ポストURL, '_blank', 'noopener,noreferrer');
+                    };
+                }
+            });
+
+            // ★【重要】シリーズ内の中身をすべてリストに追加
+             entry.items.forEach(item => {
+                imageSequence.push(item);
+          });
+        } else {
+            // 1. 枠の設定
+            // 動画かSoundCloudなら真
+            const isMedia = entry.item.種別 === '動画' || entry.item.種別 === 'SoundCloud';
+
+            // 動画などの場合は 'no-move' クラスを付与する
+            cardElement.className = `card-base single-card ${isMedia ? 'no-move' : ''}`;
+                
+            // 2. まずHTMLを完成させる（中身を確定させる）
+            cardElement.innerHTML = createSingleCard(entry.item);
+
+            // 3. データの場所を確認（単品は entry.item.ポストURL）
+            const url = entry.item.ポストURL;
+
+            if (url && url.trim() !== "") {
+                // 4. HTMLにメモを残す
+                cardElement.setAttribute('data-url', url);
+                cardElement.style.cursor = 'pointer';
+
+                // 5. 【重要】HTMLが確定した「後」で、直接クリックイベントを叩き込む
+                cardElement.onclick = (e) => {
+                    // 1. もしクリックされたのが「画像(IMG)」だったら、ここでは何もしない
+                    //    → これにより、イベントが上に流れてモーダルが開く
+                    if (e.target.tagName === 'IMG') return; 
+
+                    // 2. 画像以外（カードの余白など）をクリックした時だけ、Xを開く
+                    if (url && url.trim() !== "") {
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                    }
+                };
+            }
+            imageSequence.push(entry.item);
+        }
+        container.appendChild(cardElement);
+    });
+    
+    // 最後に、完成した「表示順リスト」をグローバル変数に保存
+    currentAllImages = imageSequence;
+
+    // 動的に追加したTwitter埋め込みを再読込
+    if (window.twttr && window.twttr.widgets && typeof window.twttr.widgets.load === 'function') {
+        window.twttr.widgets.load(container);
+    }
+    loadSoundCloudThumbnails(container);
+}
+
+// 5.カード作成パーツ
+// 5-1.シリーズ枠を作成する関数 ---
+function createSeriesHtml(seriesName, items, maxSeriesId) {
+    // サブカードをすべて生成して結合する
+    // items.map で各アイテムを createSubCard に渡し、最後に join('') で一つの文字列にする
+    const subCardsHtml = items.map((item, index) => {
+        return createSubCard(item, items, maxSeriesId, index);
+    }).join('');
+
+    return `
+        <div class="card-base series-container">
+            <div class="series-title-area">
+                <h3 class="series-title"><i class="fa-solid fa-book bk-icon"></i><span>${seriesName}シリーズ</span></h3>
+            </div>
+            <div class="sub-cards-grid">
+                ${subCardsHtml}
+            </div>
+        </div>
+    `;
+}
+
+// 5-2.サブカードを作成する関数（シリーズ内の小さなカード）
+function createSubCard(item, items, maxSeriesId, index) {
+    // 以前作成した getMediaHtml を使って中身を取得
+    const mediaContent = getMediaHtml(item, maxSeriesId);
+
+    return `
+        <div class="card-base sub-card">
+            ${mediaContent}
+        </div>
+    `;
+}
+
+// 5-3. 単品カード（シリーズじゃないもの）の外枠を作成
+function createSingleCard(item) {
+    const mediaContent = getMediaHtml(item);
+
+    return `
+        <div> <!-- gridを名前に含めず、シンプルなクラス名にする -->
+            <div class="media-container">
+                ${mediaContent}
+            </div>
+
+        </div>
+    `;
+}
+
+// 6.カード内のメディア種別ごとのHTML生成
+function getMediaHtml(item, maxSeriesId) { 
+    if (item.種別 === '動画') {
+        return createVideoHtml(item);
+    } else if (item.種別 === 'SoundCloud') {
+        return createSoundCloudHtml(item);
+    } else {
+        return createImageHtml(item, maxSeriesId);
+    }
+ }      // if (item.media === '動画') ...
+function createVideoHtml(item) { 
+    const unescapedEmbed = item.埋め込みURL
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+
+    return `
+        <div class="media-container">
+            ${unescapedEmbed}
+        </div>
+        <div class="info-area">
+            <p class="comment">${item.コメント || ''}</p>
+        </div>`;
+}
+function createSoundCloudHtml(item) { 
+    const unescapedEmbed = item.埋め込みURL.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    const soundCloudUrl = extractSoundCloudUrl(unescapedEmbed);
+    const escapedEmbedHtml = escapeHtmlAttr(unescapedEmbed);
+
+    if (!soundCloudUrl) {
+        return `
+            <div class="video-item-container" style="margin-bottom: 20px;">
+                ${unescapedEmbed}
+                <div class="comment" style="margin-top: 10px;">
+                    ${item.コメント || ''}
+                </div>
+            </div>`;
+    }
+
+    return `
+        <div class="soundcloud-card" data-sc-url="${escapeHtmlAttr(soundCloudUrl)}" data-sc-html="${escapedEmbedHtml}" onclick="window.open('${soundCloudUrl}', '_blank')" style="cursor: pointer; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
+            <div class="soundcloud-thumb" style="position: relative; min-height: 140px; display: flex; align-items: center; justify-content: center; background: #f2f2f2; color: #444; font-weight: bold;">
+                Loading SoundCloud thumbnail...
+            </div>
+            <div class="comment" style="padding: 10px; font-size: 14px; color: #333;">
+                ${item.コメント || ''}
+            </div>
+        </div>`;
+}
+
+function extractSoundCloudUrl(html) {
+    const playerMatch = html.match(/https?:\/\/w\.soundcloud\.com\/player\/\?url=([^"'&\s]+)/);
+    if (playerMatch) {
+        return decodeURIComponent(playerMatch[1]);
+    }
+    const pageMatch = html.match(/https?:\/\/soundcloud\.com\/[\w-]+\/[\w-]+/);
+    return pageMatch ? pageMatch[0] : null;
+}
+
+function escapeHtmlAttr(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function loadSoundCloudThumbnails(container) {
+    const cards = container.querySelectorAll('.soundcloud-card');
+    cards.forEach(card => {
+        const url = card.dataset.scUrl;
+        if (!url || card.dataset.scLoaded === '1') return;
+
+        fetch(`https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(url)}`)
+            .then(response => response.ok ? response.json() : Promise.reject(response))
+            .then(data => {
+                const thumb = card.querySelector('.soundcloud-thumb');
+                if (data.thumbnail_url && thumb) {
+                    thumb.innerHTML = `<img src="${data.thumbnail_url}" style="width: 100%; display: block; object-fit: cover;">`;
+                    card.dataset.scLoaded = '1';
+                } else if (thumb) {
+                    const embedHtml = card.getAttribute('data-sc-html');
+                    thumb.innerHTML = embedHtml || 'SoundCloud preview';
+                    card.dataset.scLoaded = '1';
+                }
+            })
+            .catch(() => {
+                const thumb = card.querySelector('.soundcloud-thumb');
+                const embedHtml = card.getAttribute('data-sc-html');
+                if (thumb) {
+                    thumb.innerHTML = embedHtml || 'SoundCloud preview';
+                }
+            });
+    });
+}
+
+function createImageHtml(item, maxSeriesId) { 
+    // 1. to be continued... の判定
+    const continueBadge = item.続き作るフラグ == 1 
+        ? '<div><span class="continue-badge">to be continued...</span></div>' 
+        : '<div></div>';
+
+    // 2. シリーズの最大値を取得（counts = seriesCounts）    
+    // 2-1. シリーズ連番表示の組み立て
+    let seriesDisplay = '';
+    if (item.シリーズ連番 && item.シリーズ) {
+        // ここで maxCount（シリーズごとの合計）を分母に使います
+        seriesDisplay = `<span class="series-id">#${item.シリーズ連番}/${maxSeriesId}</span>`;
+    }
+
+    return `
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+            ${continueBadge}
+            <div style="text-align: right;">
+
+                <span class="id-badge">${item.ID || ''}</span>
+            </div>
+        </div>
+        <img src="${item.画像URL}" alt="${item.コメント || ''}" onclick="openModalById('${item.ID}')" style="cursor: pointer;">
+        <div class="card-body">
+            <p>${seriesDisplay || ''}</p>
+            <p>${item.コメント || ''}</p>
+
+        </div>
+    `;
+}
+
+load();
+
+// 画像モーダル用の関数
+let currentAllImages = []; // 現在表示中の全画像データ
+let currentIndex = 0;        // 今何枚目か
+
+// 画像を開く関数
+function openModalById(id) {
+    currentIndex = currentAllImages.findIndex(img => img.ID === id);
+    if (currentIndex === -1) return; // 見つからない場合は何もしない
+
+    const modal = document.getElementById("image-modal");
+    modal.style.display = "block";
+    updateModalContent();
+}
+
+function openModal(itemJson) {
+    // 互換性のために残していますが、現在は ID で開きます
+    openModalById(JSON.parse(itemJson).ID);
+}
+
+// モダルの内容を更新する
+function updateModalContent() {
+    const img = document.getElementById("modal-img");
+    const seriesInfo = document.getElementById("modal-series-info");
+    const caption = document.getElementById("modal-caption");
+    const item = currentAllImages[currentIndex];
+
+    img.src = item.画像URL;
+    
+    // シリーズと連番を表示
+    if (item.シリーズ && item.シリーズ.trim() !== "") {
+        // シリーズ内での現在の画像の番号を計算
+        const seriesItems = currentAllImages.filter(img => img.シリーズ === item.シリーズ);
+        const indexInSeries = seriesItems.findIndex(img => img === item) + 1;
+        const totalInSeries = seriesItems.length;
+        
+        seriesInfo.innerText = `${item.シリーズ}シリーズ　#${indexInSeries}/${totalInSeries}`;
+    } else {
+        seriesInfo.innerText = '';
+    }
+    
+    caption.innerText = item.コメント && item.コメント.trim() !== "" ? item.コメント : '';
+
+    // 最初や最後の画像なら矢印を隠すなどの制御もここで行えます
+    document.querySelector('.prev').style.display = currentIndex === 0 ? 'none' : 'block';
+    document.querySelector('.next').style.display = currentIndex === currentAllImages.length - 1 ? 'none' : 'block';
+}
+
+// 前後へ移動する
+function changeImage(step, event) {
+    event.stopPropagation(); // モーダルが閉じるのを防ぐ
+    currentIndex += step;
+    if (currentIndex < 0) currentIndex = 0;
+    if (currentIndex >= currentAllImages.length) currentIndex = currentAllImages.length - 1;
+    updateModalContent();
+}
+
+function closeModal() {
+    document.getElementById("image-modal").style.display = "none";
+}
+
+</script>
+
+
+<!-- 画像拡大用のモーダル -->
+<div id="image-modal" class="modal" onclick="closeModal()">
+
+    <div id="modal-series-info"></div>
+    <img class="modal-content" id="modal-img">
+    <div id="modal-caption"></div>
+    
+    <!-- 前後へのナビゲーションアイコン -->
+    <a class="prev" onclick="changeImage(-1, event)">&#10094;</a>
+    <a class="next" onclick="changeImage(1, event)">&#10095;</a>
+
+    <span class="modal-close" onclick="closeModal()">&times;</span>
+</div>
+
 </body>
 </html>

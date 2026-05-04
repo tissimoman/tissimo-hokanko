@@ -1,0 +1,294 @@
+/* 基本的なやつ */
+body { font-family: sans-serif; background-color: #f0f2f5; padding: 30px 20px; }
+h1 { color: #333; text-align: center; }
+i { margin-left: 5px; }
+
+
+/* ヘッダー */
+/* 一番外側の親を固定 */
+.main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 7000;    /* 絶対に一番手前に持ってくる */
+    background: black; /* 背景色がないと、スクロールした時に下の文字と重なって読めなくなります */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 境目を見やすくする */
+}
+/* 中身のコンテナ（ボタンの並び） */
+.nav-container {
+    display: flex;
+    justify-content: center; /* メニューを中央に寄せる */
+    align-items: center;
+    max-width: 1200px;       /* 画面が広すぎてもコンテンツが散らばらないように */
+    margin: 0 auto;          /* 中央配置 */
+    height: 50px;            /* 高さを決めておくと安定します */
+}
+.nav-links {
+    display: flex;       /* 要素を横並びにする */
+    gap: 20px;          /* リンク同士の間に 20px の間隔を作る */
+    align-items: center; /* 垂直方向の中央揃え */
+}
+
+/* リンクのデザイン */
+.nav-links a {
+    text-decoration: none;
+    color: #ddd;
+    margin: 0;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.nav-links a.active {
+    color: #32e0ff;
+    border-bottom: 2px solid #32e0ff;
+    padding-bottom: 5px;
+}
+
+/* アイコン設定 */
+.x-icon {
+    font-size: 12px;
+    color: #fff ;
+    padding: 2px;
+}
+.sc-icon { 
+    font-size: 12px;
+    color: #ff5500; 
+    padding: 2px;
+} /* SoundCloudはオレンジ */
+.bk-icon { 
+    display: inline-flex; /* アイコン自体のズレを防ぐ */
+    font-size: 22px;      /* 文字の大きさに合わせる */
+    color: #25b3eb; 
+    transform: translateY(2px); /* 描画位置だけを下に2px移動 */
+} 
+
+
+/* タイトルエリア */
+.title-area {
+    display: flex;
+    flex-direction: column; /* 縦に並べる */
+    align-items: flex-start; /* これで子要素（h1やp）を左端に強制的に揃える */
+    gap: 8px;               /* タイトルと言い訳の間の隙間（お好みで調整） */
+    padding: 20px 0 10px 0; /* 上に少し余裕を持たせると、よりスッキリします */
+    /* text-align: left; も念のため入れておくと安心です */
+    text-align: left;
+}
+
+.title-area h1 {
+    font-size: 1.1rem;      /* 大きすぎず、存在感はあるサイズ */
+    font-weight: 700;
+    margin: 0;
+    color: #333;
+}
+
+.title-area .subtitle {
+    font-size: 0.8rem;      /* 小さな「言い訳」フォント */
+    color: #666;            /* 少し薄いグレー */
+    margin: 0;
+    line-height: 1.4;       /* 行間を少し作ると読みやすくなります */
+}
+
+/* 地獄のカード領域 */
+/* 親コンテナをグリッドにする */
+#card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+    /* align-items: stretch; がデフォルトですが、念のため明記 */
+    align-items: stretch;
+}
+
+/* 共通の「カード」という型 */
+.card-base {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+    padding: 10px;
+    margin: 0 !important; /* ここを 0 にして Grid に任せる */
+}
+
+/* ★ここが重要：シリーズの外枠だけを横いっぱいに広げる */
+.series-card {
+background-color: transparent !important; /* 外枠のグレーを一旦消す */
+    grid-column: 1 / -1 !important;
+    margin: 0 !important;
+
+}
+
+.series-container {
+    background-color: #eeeeee; /* グレーはここに塗る */
+    border: 1px solid #29c4eb; /* 全周を水色の線で囲む */
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden; /* これで角丸の外にグレーが漏れるのを防ぐ */
+}
+/* 上の線 */
+.series-container::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: #29c4eb;
+}
+
+/* 下の線 */
+.series-container::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: #29c4eb;
+}
+
+/* タイトル部分 */
+.series-title {
+    display: flex;           /* Flexboxにする */
+    align-items: center;     /* 上下中央揃え */
+    gap: 12px;               /* これでアイコンと文字の間に隙間ができる */
+    margin: 0;               /* 元のインラインスタイルにあった設定 */
+}
+
+/* シリーズ内のサブカードを横に並べる */
+.sub-cards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    gap: 10px;
+}
+
+/* シリーズ内の小さなカードサイズを固定 */
+.sub-card {
+    background: #fff;
+    width: 270px; /* ここでお好みの幅に固定 */
+    flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* アニメーションを追加 */
+}
+.sub-card:not(.no-move):hover {
+    transform: translateY(-5px);
+}
+/* --- 中身のルール（画像が暴れないように） --- */
+/* 単品カードの枠（共通デザイン） */
+.single-card {
+    border-radius: 8px;
+    overflow: hidden; /* これで、はみ出した部分を角丸でカットする */
+    background: #fff;
+    display: flex;         /* 中身をFlexboxにして制御 */
+    flex-direction: column; /* 上下に並べる */
+    height: auto;           /* 固定せず中身に合わせる */
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1); /* 全方位1pxにすると計算が安定します */
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* アニメーションを追加 */
+}
+.single-card:hover {
+    cursor: pointer;
+}
+
+/* ★動く挙動（transform）だけを「no-move」がない時だけに絞る */
+.single-card:not(.no-move):hover {
+    transform: translateY(-5px);
+}
+
+/* 単品カード内の画像 */
+.single-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+/* サブカード内の画像 */
+.sub-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+/* カード内野茂字装飾 */
+/* IDバッジ（右揃え） */
+.id-badge {
+    color: #999;
+    font-size: 10px;
+    font-weight: 600;
+}
+.card-base p { font-size: 14px; color: #999; margin: 11px 0; }
+.continue-badge { background: white; color:#ff9800 ; padding: 2px 8px; font-size: 13px; border-radius: 4px; font-weight: bold; border-color: #c4c4c4; }
+.series-id { 
+    color:#29c4eb ; 
+    font-size: 15px; 
+    font-weight: bold; 
+ }
+
+.modal {
+    display: none;
+    position: fixed;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    color: white;
+    z-index: 10000 !important;
+}
+
+/* モーダルのシリーズ情報（シリーズ名と連番） */
+#modal-series-info {
+    position: absolute;
+    top: 30px;
+    left: 0;
+    width: 100%;       /* 横幅いっぱい使う */
+    height: 50px;      /* 高さを固定して場所を確保 */
+    display: flex;     /* 中の要素を整列させる */
+    justify-content: center; /* 左右中央 */
+    align-items: center;     /* 上下中央 */
+    background-color: rgba(0,0,0,0.5); /* 透過背景をつけて読みやすく */
+    color:#29c4eb ; 
+    font-size: 17px; 
+    font-weight: bold; 
+    z-index: 50;
+}
+
+/* モーダルの画像 */
+.modal-content {
+    display: block;
+    margin: 80px auto 0; /* 上に60pxの余白を作って中央寄せ */
+    max-width: 90%;
+    max-height: 80%;
+    border: 1px solid #fff;
+    /* position: absolute は一旦外して margin: auto に任せるのが楽です */
+}
+
+/* モーダルのキャプション（コメント）の文字色を白に */
+#modal-caption {
+    color: white;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+/* ナビゲーションアイコン */
+.prev, .next {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    padding: 16px;
+    color: white;
+    font-weight: bold;
+    font-size: 30px;
+    user-select: none;
+    background-color: rgba(0,0,0,0.3);
+}
+
+.next { right: 50px; border-radius: 3px 0 0 3px; }
+.prev { left: 50px; border-radius: 0 3px 3px 0; }
+
+.prev:hover, .next:hover { background-color: rgba(0,0,0,0.8); }
+
+.modal-close {
+    position: absolute; /* 画面の決まった場所に固定 */
+    top: 20px;         /* 上から20px */
+    right: 30px;        /* 右から30px */
+    color: #ffffff !important; /* 絶対に白にする */
+    font-size: 50px;    /* 大きく表示 */
+    font-weight: bold;
+    cursor: pointer;    /* マウスを乗せたら指マークにする */
+    z-index: 100;       /* モーダル内部で最大にする */
+}
