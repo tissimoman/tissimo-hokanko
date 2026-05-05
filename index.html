@@ -5,11 +5,11 @@
     <meta name="robots" content="noindex, nofollow">
     <!-- 個別の埋め込みコード内にある <script ...></script> は無視していいように、サイト全体で一度だけ読み込む設定 -->
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-    <title>Minimal Album</title>
+    <title>倉庫</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="css.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="akan.png" type="image/png">
 </head>
 <body>
 <header class="main-header">
@@ -311,26 +311,24 @@ function createVideoHtml(item) {
         </div>`;
 }
 function createSoundCloudHtml(item) { 
-    const unescapedEmbed = item.埋め込みURL.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-    const soundCloudUrl = extractSoundCloudUrl(unescapedEmbed);
-    const escapedEmbedHtml = escapeHtmlAttr(unescapedEmbed);
+    // 1. CSVにある <iframe> タグをデコードして使える状態にする
+    const unescapedEmbed = item.埋め込みURL
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 
-    if (!soundCloudUrl) {
-        return `
-            <div class="video-item-container" style="margin-bottom: 20px;">
-                ${unescapedEmbed}
-                <div class="comment" style="margin-top: 10px;">
-                    ${item.コメント || ''}
-                </div>
-            </div>`;
-    }
+    // 2. セキュリティエラー対策：allow属性に encrypted-media を追加する
+    // すでに iframe タグがあるなら、文字列置換で属性をねじ込みます
+    const safeEmbed = unescapedEmbed.includes('allow=') 
+        ? unescapedEmbed.replace('allow="', 'allow="encrypted-media; ') 
+        : unescapedEmbed.replace('<iframe ', '<iframe allow="encrypted-media" ');
 
+    // 3. 表示用のHTMLを組み立てる
     return `
-        <div class="soundcloud-card" data-sc-url="${escapeHtmlAttr(soundCloudUrl)}" data-sc-html="${escapedEmbedHtml}" onclick="window.open('${soundCloudUrl}', '_blank')" style="cursor: pointer; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
-            <div class="soundcloud-thumb" style="position: relative; min-height: 140px; display: flex; align-items: center; justify-content: center; background: #f2f2f2; color: #444; font-weight: bold;">
-                Loading SoundCloud thumbnail...
+        <div class="soundcloud-card-container" style="margin-bottom: 20px;">
+            <div class="soundcloud-player">
+                ${safeEmbed}
             </div>
-            <div class="comment" style="padding: 10px; font-size: 14px; color: #333;">
+            <div class="comment" style="padding: 10px; font-size: 14px; color: #333; background: #f9f9f9; border-radius: 0 0 12px 12px; border: 1px solid #ddd; border-top: none;">
                 ${item.コメント || ''}
             </div>
         </div>`;
@@ -339,7 +337,8 @@ function createSoundCloudHtml(item) {
 function extractSoundCloudUrl(html) {
     const playerMatch = html.match(/https?:\/\/w\.soundcloud\.com\/player\/\?url=([^"'&\s]+)/);
     if (playerMatch) {
-        return decodeURIComponent(playerMatch[1]);
+        // デコードせずにそのまま返す、あるいはデコード後に正しく再構成する
+        return playerMatch[1].includes('%') ? decodeURIComponent(playerMatch[1]) : playerMatch[1];
     }
     const pageMatch = html.match(/https?:\/\/soundcloud\.com\/[\w-]+\/[\w-]+/);
     return pageMatch ? pageMatch[0] : null;
@@ -413,6 +412,7 @@ function createImageHtml(item, maxSeriesId) {
         </div>
     `;
 }
+
 
 load();
 

@@ -119,7 +119,6 @@ background-color: transparent !important; /* 外枠のグレーを一旦消す *
 
 .series-container {
     background-color: #eeeeee; /* グレーはここに塗る */
-    border: 1px solid #29c4eb; /* 全周を水色の線で囲む */
     border-radius: 10px;
     position: relative;
     overflow: hidden; /* これで角丸の外にグレーが漏れるのを防ぐ */
