@@ -89,6 +89,49 @@ i { margin-left: 5px; }
     line-height: 1.4;       /* 行間を少し作ると読みやすくなります */
 }
 
+.title-area details {
+    font-size: 0.8rem;    /* 小さな「言い訳」フォント */
+    color: #555;          /* 正しいグレーの指定 */
+    margin: 0;
+    line-height: 1.4;     /* 読みやすい行間 */
+}
+
+.title-area details .description {
+    margin-top: 5px;
+    padding-left: 10px;
+    border-left: 2px solid #eee; /* ちょっとした装飾 */
+}
+
+.title-area details summary {
+    font-size: 0.8rem;
+    color: #555; 
+    font-weight: normal;  /* ★ここで太字を解除 */
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+/* リスト全体のスタイリング */
+.description ul {
+    list-style: none;      /* デフォルトの点を消す */
+    padding: 0;
+    margin: 2px 0 0 5px;  /* 上に少し余白、左を少し空ける */
+}
+
+/* 各行のスタイリング */
+.description li {
+    position: relative;
+    padding-left: 1.2em;   /* 先頭アイコン用のスペース */
+    margin-bottom: 4px;    /* 行間の調整 */
+}
+
+/* 先頭に控えめな「・」や「>」を自作する（お好みで） */
+.description li::before {
+    content: "・";         /* または ">" など */
+    position: absolute;
+    left: 0;
+    color: #999;           /* 言い訳カラー */
+}
+
 /* 地獄のカード領域 */
 /* 親コンテナをグリッドにする */
 #card-container {

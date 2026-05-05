@@ -8,6 +8,7 @@
     <title>倉庫</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="css.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" href="akan.png" type="image/png">
 </head>
@@ -32,12 +33,30 @@
 </header>
 <!-- タイトル -->
 <div class="title-area">
-    <h1>ゆるいリンク集</h1>
-    <p class="subtitle">勉強と備忘録のために作ったティッ〇モのSNS倉庫です。<br>
-    これからupするものは新しい順に並びます。品性とクオリティがアカン…<br>
-    SoundCloudはmixがう〇こで凶器と化す可能性があるので音量注意でございます。バクと地球のサムネのやつは比較的安全なので安心してご視聴ください（他はダメなのかよ）<br>
-    Soundを含む2時創作はDTM環境を復活させ次第Xの方に動画でポスト予定です早く曲書きたい。
-</p>
+    <h1>保管庫</h1>
+    <!-- pタグをdivに変更。これで中にdetailsを入れても壊れません -->
+    <div class="subtitle">
+        勉強と備忘録のために作った品性とクオリティがとても残念なティッ〇モのSNS倉庫.<br>
+        SoundCloudはmixがう〇こで凶器と化す可能性があるので音量注意、バクと地球のサムネのやつは比較的安全なので安心してご視聴ください（他はダメなのかよ）
+
+        <details> <!-- 余白を個別に調整できます -->
+            <summary>
+                詳細・メモ
+            </summary>
+            
+            <div class="description">
+                <ul>
+                    <li>xカードクリック→SNSにページにジャンプ、画像クリック→modalで拡大表示</li>
+                    <li>新作はファイルの種別に関係なくに表示予定</li>
+                    <li>続きを作りたいものは【to be continued...】と書いてあります.</li>
+                    <li>シリーズものの作品は同じ枠内に入ります</li>
+                    <li>一枚絵もストーリー性のあるシリーズものは漫画カテゴリになっています</li>
+                    <li>DTM環境が復活できたら2次創作アレンジ動画をXでpostしたいけど貧乏なので時間がかかっています、ネタはあるから早く曲書きたい...</li>
+                    <li>今後の改善メモ［カテゴリの表示、pushツール作成、作るものメモ欄が欲しい］</li>
+                </ul>
+            </div>
+        </details>
+    </div>
 </div>
 <div id="debug" style="color:red;"></div>
 
@@ -324,14 +343,20 @@ function createSoundCloudHtml(item) {
 
     // 3. 表示用のHTMLを組み立てる
     return `
-        <div class="soundcloud-card-container" style="margin-bottom: 20px;">
-            <div class="soundcloud-player">
+    <div class="media-container" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="soundcloud-card-container" style="margin-bottom: 0;">
+            <div class="soundcloud-player" style="line-height: 0;">
                 ${safeEmbed}
             </div>
-            <div class="comment" style="padding: 10px; font-size: 14px; color: #333; background: #f9f9f9; border-radius: 0 0 12px 12px; border: 1px solid #ddd; border-top: none;">
-                ${item.コメント || ''}
-            </div>
-        </div>`;
+        </div>
+
+    </div>
+    <div class="info-area">
+        <p class="comment">
+        ${item.コメント || ''}
+        </p>
+    </div>
+    `;
 }
 
 function extractSoundCloudUrl(html) {
